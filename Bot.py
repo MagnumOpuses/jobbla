@@ -1,12 +1,12 @@
 import urllib.parse
 import requests
-import webbrowser
 import re
 import json
 import feedparser
-
+import discord
 from discord import Game
 from discord.ext.commands import Bot
+from discord import Embed
 
 
 BOT_PREFIX = '?'
@@ -23,8 +23,9 @@ async def on_ready():
 
 @client.command()
 async def Jobbpod():
-    NewsFeed = feedparser.parse("https://arbetsformedlingen.podbean.com/feed.xml")
-    print("numbers of posts", len(NewsFeed.entries) )
+    NewsFeed = feedparser.parse(
+        "https://arbetsformedlingen.podbean.com/feed.xml")
+    print("numbers of posts", len(NewsFeed.entries))
     entry = NewsFeed.entries[0]
 
     print(entry.keys())
@@ -33,35 +34,11 @@ async def Jobbpod():
     print(entry.itunes_explicit)
     print(entry.content)
 
-
-    await client.say("Här är den senaste JobbPodden :" +  entry.link)
-
-
-@client.command()
-async def Fråga(Word1 = "" ,Word2 = "" , Word3 = "" , Word4 = "" , Word5 = "" , Word6 = "" , Word7 = "" , Word8 = "" , Word9 = "" , Word10 = "" , Word11 = "" , Word12 = "" , Word13 = "" , Word14 = "" , Word15 = "" , Word16 = "" , Word17 = "" , Word18 = ""   ):
-    message = Word1 + " " + Word2 + " "+ Word3 + " "+ Word4 + " "+ Word5 + " "+ Word6 + " "+ Word7 + " "+ Word8 + " "+ Word9 + " "+ Word10 + " "+ Word11 + " "+ Word12+ " " + Word13+ " " + Word14+ " " + Word15+ " " + Word16+ " " + Word17+ " " + Word18 
-    
-    main_api = "https://qna-innovationscenter.azurewebsites.net/qnamaker/knowledgebases/bd006025-8f47-426b-8e35-f3d0e18ff30e/generateAnswer?"
-    print(message)
-    params = {"question": message, "top": "1"}
-    headers = {"AUTHORIZATION": "EndpointKey 8762728a-b4e0-456c-b900-08be5ac68623",
-               "Content-Type": "application/json"}
-    print(params)
-    url = main_api + urllib.parse.urlencode(params)
-    quest = json.dumps(params)
-    print(url)
-    print(headers)
-    print("working even longer")
-
-    json_data = requests.post(url, quest, headers=headers).json()
-
-    print(json_data)
-
-    await client.say(json_data['answers'][0]['answer'])
+    await client.say("Här är den senaste JobbPodden :" + entry.link)
 
 
 @client.command()
-async def Jobb(Jobb="", Stad="", Antal="5"):
+async def Jobb(Jobb="", Stad="", Antal="20"):
 
     if Jobb.isdigit() & Antal.isdigit() & Stad.isdigit():
         Jobb = "Sverige"
@@ -89,6 +66,11 @@ async def Jobb(Jobb="", Stad="", Antal="5"):
     jobID = []
     jobURL = []
     jobHead = []
+    jobRecruit = []
+    jobStad = []
+    jobAnstallningsTyp = []
+    jobYrkesbenamning = []
+    jobSistaDatum = []
     nums = 0
     jobs = 0
     jobInfo = []
@@ -107,16 +89,72 @@ async def Jobb(Jobb="", Stad="", Antal="5"):
     json_data = requests.get(url, headers=headers).json()
 
     while nums <= RealNumb:
-        jobID.append(json_data['matchningslista']
-                     ['matchningdata'][nums]['annonsid'])
-        jobURL.append(json_data['matchningslista']
-                      ['matchningdata'][nums]['annonsurl'])
-        jobHead.append(json_data['matchningslista']
-                       ['matchningdata'][nums]['annonsrubrik'])
+        try:
+            jobID.append(json_data['matchningslista']
+                         ['matchningdata'][nums]['annonsid'])
+            jobURL.append(json_data['matchningslista']
+                          ['matchningdata'][nums]['annonsurl'])
+            jobHead.append(json_data['matchningslista']
+                           ['matchningdata'][nums]['annonsrubrik'])
+            jobStad.append(json_data['matchningslista']
+                           ['matchningdata'][nums]['kommunnamn'])
+            jobAnstallningsTyp.append(json_data['matchningslista']
+                                      ['matchningdata'][nums]['anstallningstyp'])
+            jobRecruit.append(json_data['matchningslista']
+                              ['matchningdata'][nums]['arbetsplatsnamn'])
+            jobYrkesbenamning.append(json_data['matchningslista']
+                                     ['matchningdata'][nums]['yrkesbenamning'])
+            try:
+                jobSistaDatum.append(json_data['matchningslista']
+                                     ['matchningdata'][nums]['sista_ansokningsdag'])
+            except:
+                jobSistaDatum.append("-")
+        except:
+            print("Failed")
+
         nums += 1
 
+    print(jobSistaDatum)
     while jobs <= RealNumb:
-        await client.say(jobHead[jobs] + "\n" + jobURL[jobs])
-        jobs += 1
+        try:
+
+            embed = Embed(
+                title=jobHead[jobs], description=jobYrkesbenamning[jobs], color=0x00ff00)
+            if(jobSistaDatum != None):
+                embed.add_field(name="Sök Senast",
+                                value=jobSistaDatum[jobs][0:10], inline=False)
+            embed.add_field(name="Stad", value=jobStad[jobs], inline=False)
+            embed.add_field(name="Arbetsgivare",
+                            value=jobRecruit[jobs], inline=False)
+            embed.add_field(name="Anställningstyp",
+                            value=jobAnstallningsTyp[jobs], inline=False)
+            embed.add_field(name="Mer info", value=jobURL[jobs], inline=False)
+            await client.say(embed=embed)
+            jobs += 1
+        except:
+            ("Not enough work")
+            jobs += 1
+
+
+@client.command()
+async def Spel(Spel="", Roll=""):
+    Spel = Spel.lower()
+    Roll = Roll.lower()
+
+    if (Spel or Roll == "world of warcraft" or "wow"):
+        print(Spel)
+        print(Roll)
+        if(Spel == "support" or Spel == "support" or Roll == "support" or Roll == "support"):
+            print("support in WoW")
+        elif(Spel == "tank" or Roll == "tank"):
+            print("Tank")
+        elif(Spel == "dps" or Roll == "dps"):
+            print("DPS")
+        else:
+            print("No role Chosen")
+    elif (Spel == Spel):
+        print("Wrong")
+
+    await client.say("Hello")
 
 client.run(TOKEN)
