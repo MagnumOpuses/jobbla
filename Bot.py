@@ -1,3 +1,4 @@
+# AUTHOR Andreas WIman
 import urllib.parse
 import requests
 import re
